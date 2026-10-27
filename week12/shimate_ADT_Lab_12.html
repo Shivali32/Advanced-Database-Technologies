@@ -1,0 +1,271 @@
+#
+<center>
+ADT Lab 12 (10pts)
+</center>
+##
+<center>
+Cassandra
+</center>
+<p>Setup Instructions-</p>
+<ul>
+<li>Go to the Astra DB website (https://astra.datastax.com/) and sign up for a free account.</li>
+<li>Click on database and hit Create Database</li>
+<li>Give database name</li>
+</ul>
+<figure>
+<img src="attachment:first.png" alt="" /><figcaption>first.png</figcaption>
+</figure>
+<p>Create a keyspace named “lab 12”</p>
+<figure>
+<img src="attachment:second.png" alt="" /><figcaption>second.png</figcaption>
+</figure>
+<figure>
+<img src="attachment:third.png" alt="" /><figcaption>third.png</figcaption>
+</figure>
+<ul>
+<li>Go to the CQL Console and see if keyspace was created properly by running the command</li>
+</ul>
+<p><code>DESC KEYSPACES;</code></p>
+<figure>
+<img src="attachment:2-2.png" alt="" /><figcaption>2-2.png</figcaption>
+</figure>
+<p>You should see the keyspace that you created earlier. Keyspace is similar to a schema in relational dbms</p>
+<h4 id="astra-db">Astra DB</h4>
+<p>Astra DB is a cloud-native database-as-a-service (DBaaS) offering provided by DataStax, which is designed to provide a fully managed and scalable NoSQL database service for modern applications. Astra DB is built on top of the Apache Cassandra database, but it includes additional features and capabilities that make it easier to use and more powerful.</p>
+<ul>
+<li>Now let’s use the keyspace to execute further queries, similar to what we do in RDBMS. First we select the schema to be used</li>
+</ul>
+<p><code>USE lab12;</code></p>
+<ul>
+<li>Now lets create a people table using this query-</li>
+</ul>
+<p>CREATE TABLE lab12.people (</p>
+<pre><code>id uuid PRIMARY KEY,
+name text,
+height float,
+weight float</code></pre>
+<p>);</p>
+<ul>
+<li>Verify if the table is created by running</li>
+</ul>
+<p><code>DESC TABLES;</code></p>
+<p>Your output should be like-</p>
+<figure>
+<img src="attachment:3.png" alt="" /><figcaption>3.png</figcaption>
+</figure>
+<div class="sourceCode" id="cb2"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="op">!</span>pip install cassandra<span class="op">-</span>driver</span></code></pre></div>
+<pre><code>Collecting cassandra-driver
+  Downloading cassandra_driver-3.29.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (6.9 kB)
+Collecting geomet&gt;=1.1 (from cassandra-driver)
+  Downloading geomet-1.1.0-py3-none-any.whl.metadata (11 kB)
+Requirement already satisfied: click in /usr/local/lib/python3.12/dist-packages (from geomet&gt;=1.1-&gt;cassandra-driver) (8.3.0)
+Downloading cassandra_driver-3.29.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (374 kB)
+[2K   [90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m374.4/374.4 kB[0m [31m4.7 MB/s[0m eta [36m0:00:00[0m
+[?25hDownloading geomet-1.1.0-py3-none-any.whl (31 kB)
+Installing collected packages: geomet, cassandra-driver
+Successfully installed cassandra-driver-3.29.3 geomet-1.1.0</code></pre>
+<div class="sourceCode" id="cb4"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="im">from</span> cassandra.cluster <span class="im">import</span> Cluster</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a><span class="im">from</span> cassandra.auth <span class="im">import</span> PlainTextAuthProvider</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a><span class="im">from</span> cassandra.query <span class="im">import</span> BatchStatement</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a><span class="im">from</span> uuid <span class="im">import</span> uuid4</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a><span class="im">import</span> csv</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a><span class="im">import</span> os</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a>pip install <span class="op">--</span>upgrade astrapy</span></code></pre></div>
+<pre><code>Collecting astrapy
+  Downloading astrapy-2.1.0-py3-none-any.whl.metadata (33 kB)
+Collecting deprecation~=2.1.0 (from astrapy)
+  Downloading deprecation-2.1.0-py2.py3-none-any.whl.metadata (4.6 kB)
+Requirement already satisfied: h11&gt;=0.16.0 in /usr/local/lib/python3.12/dist-packages (from astrapy) (0.16.0)
+Requirement already satisfied: httpx&lt;1,&gt;=0.25.2 in /usr/local/lib/python3.12/dist-packages (from httpx[http2]&lt;1,&gt;=0.25.2-&gt;astrapy) (0.28.1)
+Collecting pymongo&gt;=3 (from astrapy)
+  Downloading pymongo-4.15.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (22 kB)
+Requirement already satisfied: toml&lt;1.0.0,&gt;=0.10.2 in /usr/local/lib/python3.12/dist-packages (from astrapy) (0.10.2)
+Requirement already satisfied: typing-extensions&gt;=4.0 in /usr/local/lib/python3.12/dist-packages (from astrapy) (4.15.0)
+Collecting uuid6&gt;=2024.1.12 (from astrapy)
+  Downloading uuid6-2025.0.1-py3-none-any.whl.metadata (10 kB)
+Requirement already satisfied: packaging in /usr/local/lib/python3.12/dist-packages (from deprecation~=2.1.0-&gt;astrapy) (25.0)
+Requirement already satisfied: anyio in /usr/local/lib/python3.12/dist-packages (from httpx&lt;1,&gt;=0.25.2-&gt;httpx[http2]&lt;1,&gt;=0.25.2-&gt;astrapy) (4.11.0)
+Requirement already satisfied: certifi in /usr/local/lib/python3.12/dist-packages (from httpx&lt;1,&gt;=0.25.2-&gt;httpx[http2]&lt;1,&gt;=0.25.2-&gt;astrapy) (2025.10.5)
+Requirement already satisfied: httpcore==1.* in /usr/local/lib/python3.12/dist-packages (from httpx&lt;1,&gt;=0.25.2-&gt;httpx[http2]&lt;1,&gt;=0.25.2-&gt;astrapy) (1.0.9)
+Requirement already satisfied: idna in /usr/local/lib/python3.12/dist-packages (from httpx&lt;1,&gt;=0.25.2-&gt;httpx[http2]&lt;1,&gt;=0.25.2-&gt;astrapy) (3.11)
+Requirement already satisfied: h2&lt;5,&gt;=3 in /usr/local/lib/python3.12/dist-packages (from httpx[http2]&lt;1,&gt;=0.25.2-&gt;astrapy) (4.3.0)
+Collecting dnspython&lt;3.0.0,&gt;=1.16.0 (from pymongo&gt;=3-&gt;astrapy)
+  Downloading dnspython-2.8.0-py3-none-any.whl.metadata (5.7 kB)
+Requirement already satisfied: hyperframe&lt;7,&gt;=6.1 in /usr/local/lib/python3.12/dist-packages (from h2&lt;5,&gt;=3-&gt;httpx[http2]&lt;1,&gt;=0.25.2-&gt;astrapy) (6.1.0)
+Requirement already satisfied: hpack&lt;5,&gt;=4.1 in /usr/local/lib/python3.12/dist-packages (from h2&lt;5,&gt;=3-&gt;httpx[http2]&lt;1,&gt;=0.25.2-&gt;astrapy) (4.1.0)
+Requirement already satisfied: sniffio&gt;=1.1 in /usr/local/lib/python3.12/dist-packages (from anyio-&gt;httpx&lt;1,&gt;=0.25.2-&gt;httpx[http2]&lt;1,&gt;=0.25.2-&gt;astrapy) (1.3.1)
+Downloading astrapy-2.1.0-py3-none-any.whl (333 kB)
+[2K   [90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m333.5/333.5 kB[0m [31m8.0 MB/s[0m eta [36m0:00:00[0m
+[?25hDownloading deprecation-2.1.0-py2.py3-none-any.whl (11 kB)
+Downloading pymongo-4.15.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (1.7 MB)
+[2K   [90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m1.7/1.7 MB[0m [31m39.1 MB/s[0m eta [36m0:00:00[0m
+[?25hDownloading uuid6-2025.0.1-py3-none-any.whl (7.0 kB)
+Downloading dnspython-2.8.0-py3-none-any.whl (331 kB)
+[2K   [90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m331.1/331.1 kB[0m [31m25.6 MB/s[0m eta [36m0:00:00[0m
+[?25hInstalling collected packages: uuid6, dnspython, deprecation, pymongo, astrapy
+Successfully installed astrapy-2.1.0 deprecation-2.1.0 dnspython-2.8.0 pymongo-4.15.4 uuid6-2025.0.1</code></pre>
+<p>Go to the Database Tab and click on your active database. In the Database details panel, click on Download SCB(Secure Connect Bundle). Make sure that your current working directory contains the downloaded bundle <img src="attachment:fourth.png" alt="fourth.png" /></p>
+<figure>
+<img src="attachment:fifth.png" alt="" /><figcaption>fifth.png</figcaption>
+</figure>
+<div class="sourceCode" id="cb7"><pre class="sourceCode python"><code class="sourceCode python"></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="co"># Make sure your current working directory contains the downloaded bundle (secure-connect-shreya.zip)</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a>os.listdir()</span></code></pre></div>
+<pre><code>[&#39;.config&#39;, &#39;secure-connect-shimate.zip&#39;, &#39;sample_data&#39;]</code></pre>
+<ul>
+<li><p>Now go to the tokens tab generate and download the token as shown below. Select the Organization Administrator under roles. Mkae sure that your tokens file is also in the same working directory. <img src="attachment:sixth.png" alt="sixth.png" /></p></li>
+<li><p>Copy Paste your ClientID and ClientSecret below. Again, keep the token file in the same working directory</p></li>
+</ul>
+<div class="sourceCode" id="cb10"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true"></a>cloud_config<span class="op">=</span> {</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true"></a>  <span class="st">&#39;secure_connect_bundle&#39;</span>: <span class="st">&#39;secure-connect-shimate.zip&#39;</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true"></a>}</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true"></a>auth_provider <span class="op">=</span> PlainTextAuthProvider(<span class="st">&#39;ZLpQCJytRlepNvYqoachJHKc&#39;</span>, <span class="st">&#39;TvMwmF2OTPm83,J4ZeRUp2HKbQQZ_bQ8k+r7k9+1LQuZX,BjzW8RGJ2HXy5QG2PeiYoprtgbDL14Ad9Urb4oFZQd6I_yRLYfjNM004K823fpZ8NE2eHgd_ROnArTzTMU&#39;</span>)</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true"></a>cluster <span class="op">=</span> Cluster(cloud<span class="op">=</span>cloud_config, auth_provider<span class="op">=</span>auth_provider)</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true"></a>session <span class="op">=</span> cluster.<span class="ex">connect</span>()</span></code></pre></div>
+<pre><code>WARNING:cassandra.cluster:Downgrading core protocol version from 66 to 65 for b45810f9-64b7-4832-a988-322f9aa70033-us-east1.db.astra.datastax.com:29042:b4f6d9ed-0f1d-3f7a-82f1-a4a7ea4f84d4. To avoid this, it is best practice to explicitly set Cluster(protocol_version) to the version supported by your cluster. https://docs.datastax.com/en/developer/python-driver/latest/api/cassandra/cluster.html#cassandra.cluster.Cluster.protocol_version
+WARNING:cassandra.cluster:Downgrading core protocol version from 65 to 5 for b45810f9-64b7-4832-a988-322f9aa70033-us-east1.db.astra.datastax.com:29042:b4f6d9ed-0f1d-3f7a-82f1-a4a7ea4f84d4. To avoid this, it is best practice to explicitly set Cluster(protocol_version) to the version supported by your cluster. https://docs.datastax.com/en/developer/python-driver/latest/api/cassandra/cluster.html#cassandra.cluster.Cluster.protocol_version
+WARNING:cassandra.cluster:Downgrading core protocol version from 5 to 4 for b45810f9-64b7-4832-a988-322f9aa70033-us-east1.db.astra.datastax.com:29042:b4f6d9ed-0f1d-3f7a-82f1-a4a7ea4f84d4. To avoid this, it is best practice to explicitly set Cluster(protocol_version) to the version supported by your cluster. https://docs.datastax.com/en/developer/python-driver/latest/api/cassandra/cluster.html#cassandra.cluster.Cluster.protocol_version</code></pre>
+<div class="sourceCode" id="cb12"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true"></a><span class="co"># Read the data from the CSV file</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true"></a><span class="cf">with</span> <span class="bu">open</span>(<span class="st">&#39;hw_200-1.csv&#39;</span>, <span class="st">&#39;r&#39;</span>) <span class="im">as</span> f:</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true"></a>    reader <span class="op">=</span> csv.reader(f)</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true"></a>    <span class="bu">next</span>(reader)</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true"></a>    data <span class="op">=</span> [(uuid4(), row[<span class="dv">0</span>], <span class="bu">float</span>(row[<span class="dv">1</span>]), <span class="bu">float</span>(row[<span class="dv">2</span>])) <span class="cf">for</span> row <span class="kw">in</span> reader]</span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true"></a>data[:<span class="dv">10</span>]</span></code></pre></div>
+<pre><code>[(UUID(&#39;eac2a30e-4840-416b-bf87-89ebba92b363&#39;), &#39;1&#39;, 65.78, 112.99),
+ (UUID(&#39;e520e7a4-47da-4557-bdb2-daeb9441fa99&#39;), &#39;2&#39;, 71.52, 136.49),
+ (UUID(&#39;bac5e02f-7e91-4cde-ac0c-3410f74f196a&#39;), &#39;3&#39;, 69.4, 153.03),
+ (UUID(&#39;086d1722-bd29-4f41-a594-dc235c8d9853&#39;), &#39;4&#39;, 68.22, 142.34),
+ (UUID(&#39;dee452bd-1b42-4804-9d1f-4ce106c9178d&#39;), &#39;5&#39;, 67.79, 144.3),
+ (UUID(&#39;a9d92fee-d9f8-44ba-a37a-8b36adfcde15&#39;), &#39;6&#39;, 68.7, 123.3),
+ (UUID(&#39;3b666596-39eb-4f0c-bed0-1732888314e0&#39;), &#39;7&#39;, 69.8, 141.49),
+ (UUID(&#39;1962c6f6-bbc0-4ebe-99a4-cd87b468d9a8&#39;), &#39;8&#39;, 70.01, 136.46),
+ (UUID(&#39;3226d822-1720-4547-9226-3a11978907cc&#39;), &#39;9&#39;, 67.9, 112.37),
+ (UUID(&#39;52fe34ee-9f16-457a-93e8-393c1b6517e1&#39;), &#39;10&#39;, 66.78, 120.67)]</code></pre>
+<div class="sourceCode" id="cb15"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true"></a><span class="co"># Set the keyspace</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true"></a>session.set_keyspace(<span class="st">&#39;lab12&#39;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb16"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true"></a><span class="co"># Insert the data into the database</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true"></a>query <span class="op">=</span> <span class="st">&quot;INSERT INTO people (id, name, height, weight) VALUES (?, ?, ?, ?)&quot;</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true"></a>prepared <span class="op">=</span> session.prepare(query)</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true"></a>batch <span class="op">=</span> BatchStatement()</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true"></a><span class="cf">for</span> row <span class="kw">in</span> data:</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true"></a>    batch.add(prepared, row)</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true"></a>session.execute(batch)</span></code></pre></div>
+<pre><code>WARNING:cassandra.protocol:Server warning: `USE &lt;keyspace&gt;` with prepared statements is considered to be an anti-pattern due to ambiguity in non-qualified table names. Please consider removing instances of `Session#setKeyspace(&lt;keyspace&gt;)`, `Session#execute(&quot;USE &lt;keyspace&gt;&quot;)` and `cluster.newSession(&lt;keyspace&gt;)` from your code, and always use fully qualified table names (e.g. &lt;keyspace&gt;.&lt;table&gt;). Keyspace used: 62343538313066392d363462372d343833322d613938382d333232663961613730303333_lab12, statement keyspace: 62343538313066392d363462372d343833322d613938382d333232663961613730303333_lab12, statement id: 6e636872c2540a6713959574d8041a6d
+WARNING:cassandra.protocol:Server warning: `USE &lt;keyspace&gt;` with prepared statements is considered to be an anti-pattern due to ambiguity in non-qualified table names. Please consider removing instances of `Session#setKeyspace(&lt;keyspace&gt;)`, `Session#execute(&quot;USE &lt;keyspace&gt;&quot;)` and `cluster.newSession(&lt;keyspace&gt;)` from your code, and always use fully qualified table names (e.g. &lt;keyspace&gt;.&lt;table&gt;). Keyspace used: 62343538313066392d363462372d343833322d613938382d333232663961613730303333_lab12, statement keyspace: 62343538313066392d363462372d343833322d613938382d333232663961613730303333_lab12, statement id: 6e636872c2540a6713959574d8041a6d
+WARNING:cassandra.protocol:Server warning: `USE &lt;keyspace&gt;` with prepared statements is considered to be an anti-pattern due to ambiguity in non-qualified table names. Please consider removing instances of `Session#setKeyspace(&lt;keyspace&gt;)`, `Session#execute(&quot;USE &lt;keyspace&gt;&quot;)` and `cluster.newSession(&lt;keyspace&gt;)` from your code, and always use fully qualified table names (e.g. &lt;keyspace&gt;.&lt;table&gt;). Keyspace used: 62343538313066392d363462372d343833322d613938382d333232663961613730303333_lab12, statement keyspace: 62343538313066392d363462372d343833322d613938382d333232663961613730303333_lab12, statement id: 6e636872c2540a6713959574d8041a6d
+
+
+
+
+
+&lt;cassandra.cluster.ResultSet at 0x79c611041250&gt;</code></pre>
+<ul>
+<li>Now lets go to CQL console and see if values were inserted properly</li>
+<li>Go to CQL console; use lab12 keyspace and run the command-</li>
+</ul>
+<p><code>SELECT * FROM people;</code></p>
+<ul>
+<li><p>You should see the following <img src="attachment:6.png" alt="6.png" /></p></li>
+<li><p>Now you can run some queries on the people’s table</p></li>
+</ul>
+<h4 id="retrieve-10-records-from-the-people-table">1. Retrieve 10 records from the “people” table</h4>
+<div class="sourceCode" id="cb18"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true"></a>rows <span class="op">=</span> session.execute(<span class="st">&quot;SELECT * FROM people limit 10&quot;</span>)</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true"></a><span class="cf">for</span> row <span class="kw">in</span> rows:</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true"></a>    <span class="bu">print</span>(row.<span class="bu">id</span>, row.name, row.height, row.weight)</span></code></pre></div>
+<pre><code>82585620-7bf2-4ae3-84a9-fb6f94a98645 22 68.87999725341797 143.5399932861328
+c3c24be9-70de-48f3-b11f-e0e4e94537c1 157 70.9800033569336 158.9600067138672
+e02ce9a3-6f69-45d7-98d3-75ea100395b1 199 68.0199966430664 127.47000122070312
+ad989dd8-20ca-4ab2-a5e8-f1517fba0094 37 66.80000305175781 141.8000030517578
+fecc1b75-78fa-40c9-9558-eb9e0674f522 62 69.0 137.5500030517578
+4f34d71d-d557-4759-b914-cffdbdc3f673 32 65.80999755859375 120.75
+65fdd32c-c635-4177-b894-07bb69f6230f 58 66.54000091552734 128.07000732421875
+e8fff64a-b562-4aea-957e-ee0cab67cf4d 87 67.36000061035156 140.88999938964844
+2bab5418-1162-4fd9-93fb-b0a41a8e6ecf 24 68.41999816894531 129.5
+fbbdee39-31f7-4074-b1dc-a5ed0f321371 187 68.58000183105469 127.87000274658203</code></pre>
+<h4 id="retrieve-all-data-for-individuals-with-a-height-greater-than-70-inches">2. Retrieve all data for individuals with a height greater than 70 inches</h4>
+<div class="sourceCode" id="cb20"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true"></a>rows <span class="op">=</span> session.execute(<span class="st">&quot;SELECT * FROM people WHERE height &gt; 70&quot;</span>)</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true"></a><span class="cf">for</span> row <span class="kw">in</span> rows:</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true"></a>    <span class="bu">print</span>(row.<span class="bu">id</span>, row.name, row.height, row.weight)</span></code></pre></div>
+<pre><code>---------------------------------------------------------------------------
+
+InvalidRequest                            Traceback (most recent call last)
+
+/tmp/ipython-input-1752905652.py in &lt;cell line: 0&gt;()
+----&gt; 1 rows = session.execute(&quot;SELECT * FROM people WHERE height &gt; 70&quot;)
+      2 for row in rows:
+      3     print(row.id, row.name, row.height, row.weight)
+
+
+/usr/local/lib/python3.12/dist-packages/cassandra/cluster.py in execute(self, query, parameters, timeout, trace, custom_payload, execution_profile, paging_state, host, execute_as)
+   2675         &quot;&quot;&quot;
+   2676 
+-&gt; 2677         return self.execute_async(query, parameters, trace, custom_payload, timeout, execution_profile, paging_state, host, execute_as).result()
+   2678 
+   2679     def execute_async(self, query, parameters=None, trace=False, custom_payload=None,
+
+
+/usr/local/lib/python3.12/dist-packages/cassandra/cluster.py in result(self)
+   5046             return ResultSet(self, self._final_result)
+   5047         else:
+-&gt; 5048             raise self._final_exception
+   5049 
+   5050     def get_query_trace_ids(self):
+
+
+InvalidRequest: Error from server: code=2200 [Invalid query] message=&quot;Cannot execute this query as it might involve data filtering and thus may have unpredictable performance. If you want to execute this query despite the performance unpredictability, use ALLOW FILTERING&quot;</code></pre>
+<ul>
+<li>You will get an error here. Now run the below cell</li>
+</ul>
+<div class="sourceCode" id="cb22"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true"></a>rows <span class="op">=</span> session.execute(<span class="st">&quot;SELECT * FROM people WHERE height &gt; 70 allow filtering&quot;</span>)</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true"></a><span class="cf">for</span> row <span class="kw">in</span> rows:</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true"></a>    <span class="bu">print</span>(row.<span class="bu">id</span>, row.name, row.height, row.weight)</span></code></pre></div>
+<pre><code>c3c24be9-70de-48f3-b11f-e0e4e94537c1 157 70.9800033569336 158.9600067138672
+a40a9af7-818c-45bf-b1fa-abd6f492b8ab 200 71.38999938964844 127.87999725341797
+ce00e645-cd3c-4d6b-a2cf-338fa580449d 19 71.2300033569336 137.89999389648438
+e7248a87-61a1-4e9d-8f3e-2dd066ee0284 72 70.83999633789062 134.02000427246094
+ced142d2-4d64-42a3-b68d-075067daa4e5 96 70.55999755859375 131.8000030517578
+7a1481f0-4d41-496d-8511-df63d84f4558 175 73.83000183105469 139.3000030517578
+62957c2a-7e8a-45bf-a986-0f905cf8c16b 57 70.41000366210938 155.89999389648438
+eac4526f-1bed-4349-b5a5-6992df9b7b3a 89 70.18000030517578 121.12000274658203
+198f5373-8ede-4f50-a32f-5a258143186b 115 70.01000213623047 122.04000091552734
+8f421f83-30f2-4649-bac1-7c3940888864 159 72.0199966430664 138.77999877929688
+29309fbf-86d2-4dd7-8cb0-4339943d84a2 92 70.23999786376953 141.49000549316406
+33423792-bc64-43ca-87b9-65ad6f63403f 27 70.83999633789062 142.4199981689453
+1962c6f6-bbc0-4ebe-99a4-cd87b468d9a8 8 70.01000213623047 136.4600067138672
+179a0b18-57b6-4b47-8beb-71496a195c92 53 70.2699966430664 125.4800033569336
+546eed2d-1d58-429e-94a0-7b43db3d4c14 16 71.08999633789062 140.0
+4950cfce-5f51-4f00-b8de-68ed425719fd 191 70.19000244140625 144.99000549316406
+68474816-4e2c-40b2-a865-2c054b003c4b 56 70.18000030517578 147.88999938964844
+3b0debc5-68f1-4688-b715-5403239e1acd 113 70.19000244140625 131.63999938964844
+0746e8d2-ef96-4fe4-a65b-1dab087325ad 65 70.80999755859375 135.32000732421875
+d9674455-71f2-44c6-9681-d350825d6011 112 70.05000305175781 127.61000061035156
+6d88cebd-a06b-42f7-bbd7-e45a2c390fc4 83 70.05000305175781 155.3800048828125
+3b02a5a6-1df9-44f9-9d84-227545401f8a 95 70.05999755859375 133.4600067138672
+e520e7a4-47da-4557-bdb2-daeb9441fa99 2 71.5199966430664 136.49000549316406
+3b7fb5c5-356f-4e3c-ac6e-0ac3d966d279 35 71.80000305175781 140.10000610351562
+d4600ed9-1dd6-4e28-81a0-88a58d540972 88 70.08999633789062 131.58999633789062
+a350ef55-3ab9-4179-bc50-9c5360ba94c3 130 70.23999786376953 133.97999572753906
+75a5eae2-9dd7-4893-b750-443ee78f1737 155 72.44000244140625 136.74000549316406
+1cc82be3-cb6b-43f9-9c2f-9a3426ebce43 34 70.5999984741211 136.22000122070312
+29ae5dbb-18d1-4975-abf9-b454bc8071ba 135 71.0999984741211 128.13999938964844
+47e3edfe-497e-4712-8ed1-88da93b54dd2 139 73.9000015258789 151.38999938964844
+fd805782-8bee-47d2-acf2-e8e35acd012f 132 71.2300033569336 130.6999969482422
+2d9994e7-2842-43de-9204-c98ca7c1e1bb 93 71.48999786376953 140.61000061035156</code></pre>
+<p>Why is the query running if we add ALLOW FILTERING at the end? - ALLOW FILTERING is a way to retrieve data from a table that doesn’t involve using the primary key, but it can be an expensive operation as it requires scanning the entire table. - In general, it’s a best practice to avoid using ALLOW FILTERING whenever possible and to design your data model so that queries can be satisfied using the primary key. However, there may be cases where using ALLOW FILTERING is necessary or unavoidable.</p>
+<ol start="3" type="1">
+<li>Similarly now retrive data for individuals with a weight between 150 and 200 pounds</li>
+</ol>
+<div class="sourceCode" id="cb24"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true"></a>rows <span class="op">=</span> session.execute(<span class="st">&quot;SELECT * FROM people WHERE weight &gt;= 150 and weight &lt; 200 allow filtering&quot;</span>)</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true"></a><span class="cf">for</span> row <span class="kw">in</span> rows:</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true"></a>    <span class="bu">print</span>(row.<span class="bu">id</span>, row.name, row.height, row.weight)</span></code></pre></div>
+<pre><code>c3c24be9-70de-48f3-b11f-e0e4e94537c1 157 70.9800033569336 158.9600067138672
+bac5e02f-7e91-4cde-ac0c-3410f74f196a 3 69.4000015258789 153.02999877929688
+62957c2a-7e8a-45bf-a986-0f905cf8c16b 57 70.41000366210938 155.89999389648438
+6d88cebd-a06b-42f7-bbd7-e45a2c390fc4 83 70.05000305175781 155.3800048828125
+47e3edfe-497e-4712-8ed1-88da93b54dd2 139 73.9000015258789 151.38999938964844</code></pre>
+<p>Hint- Use allow filtering; Syntax will be similiar to normal SQL. We are actually using CQL here which is a subset of SQL</p>
+<p>Expected output</p>
+<figure>
+<img src="attachment:7.JPG" alt="" /><figcaption>7.JPG</figcaption>
+</figure>
+<div class="sourceCode" id="cb26"><pre class="sourceCode python"><code class="sourceCode python"></code></pre></div>
